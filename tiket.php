@@ -5,26 +5,51 @@ class Tiket {
     public $jumlah;
     private $daftarHarga = [
         "Reguler" => 50000,
-        "VIP" => 100000,
-        "VVIP" => 200000
+        "VIP"     => 100000,
+        "VVIP"    => 200000
     ];
 
     public function __construct($nama, $kat, $qty) {
-        $this->namaPembeli = htmlspecialchars($nama);
-        $this->kategori = $kat;
-        $this->jumlah = (int)$qty;
+        // Validasi kategori
+        if (!array_key_exists($kat, $this->daftarHarga)) {
+            throw new InvalidArgumentException("Kategori '$kat' tidak valid.");
+        }
+
+        // Validasi jumlah
+        $qty = (int)$qty;
+        if ($qty < 1 || $qty > 10) {
+            throw new InvalidArgumentException("Jumlah tiket harus antara 1–10.");
+        }
+
+        $this->namaPembeli = htmlspecialchars(trim($nama), ENT_QUOTES, 'UTF-8');
+        $this->kategori    = htmlspecialchars($kat, ENT_QUOTES, 'UTF-8');
+        $this->jumlah      = $qty;
     }
 
-    public function hitungTotal() {
-        return $this->daftarHarga[$this->kategori] * $this->jumlah;
+    public function getHargaSatuan(): int {
+        return $this->daftarHarga[$this->kategori];
     }
 
-    public function cetakStruk() {
-        return "<h3>Konfirmasi Pesanan</h3>" .
-               "Nama: " . $this->namaPembeli . "<br>" .
-               "Kategori: " . $this->kategori . "<br>" .
-               "Jumlah: " . $this->jumlah . " Tiket<br>" .
-               "Total Bayar: <b>Rp " . number_format($this->hitungTotal(), 0, ',', '.') . "</b>";
+    public function hitungTotal(): int {
+        return $this->getHargaSatuan() * $this->jumlah;
+    }
+
+    public function cetakStruk(): string {
+        $hargaSatuan = number_format($this->getHargaSatuan(), 0, ',', '.');
+        $total       = number_format($this->hitungTotal(), 0, ',', '.');
+
+        return "
+            <div class='struk'>
+                <h3>🎟️ Konfirmasi Pesanan</h3>
+                <table>
+                    <tr><td>Nama</td><td>: {$this->namaPembeli}</td></tr>
+                    <tr><td>Kategori</td><td>: {$this->kategori}</td></tr>
+                    <tr><td>Harga Satuan</td><td>: Rp {$hargaSatuan}</td></tr>
+                    <tr><td>Jumlah</td><td>: {$this->jumlah} Tiket</td></tr>
+                    <tr><td><b>Total Bayar</b></td><td>: <b>Rp {$total}</b></td></tr>
+                </table>
+            </div>
+        ";
     }
 }
 ?>
